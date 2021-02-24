@@ -31,10 +31,41 @@
 
 const searchButton = document.querySelector(".search-button");
 searchButton.addEventListener("click", async function () {
-  const inputKeyword = document.querySelector(".input-keyword");
-  const movies = await getMovies(inputKeyword.value);
-  updateUI(movies);
+  try {
+    const inputKeyword = document.querySelector(".input-keyword");
+    const movies = await getMovies(inputKeyword.value);
+    updateUI(movies);
+  } catch (err) {
+    const showError = showAlert(err);
+    const movCont = document.querySelector(".movie-container");
+    movCont.innerHTML = showError;
+  }
 });
+
+function getMovies(keyword) {
+  return fetch(`http://www.omdbapi.com/?apikey=dce8c870&s=${keyword}`)
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(response.statusText);
+      }
+      return response.json();
+    })
+    .then((response) => {
+      if (response.Response === "False") {
+        throw new Error(response.Error);
+      }
+      return response.Search;
+    });
+}
+
+function updateUI(movies) {
+  let cards = "";
+  movies.forEach((mov) => {
+    cards += showCard(mov);
+  });
+  const movieContainer = document.querySelector(".movie-container");
+  movieContainer.innerHTML = cards;
+}
 
 // when detail button clicked
 // event binding
@@ -56,23 +87,6 @@ function updateModalDetail(m) {
   const movieDetail = showModal(m);
   const modalBody = document.querySelector(".modal-body");
   modalBody.innerHTML = movieDetail;
-}
-
-function getMovies(keyword) {
-  return fetch(
-    `http://www.omdbapi.com/?i=tt3896198&apikey=dce8c870&s=${keyword}`
-  )
-    .then((response) => response.json())
-    .then((response) => response.Search);
-}
-
-function updateUI(movies) {
-  let cards = "";
-  movies.forEach((mov) => {
-    cards += showCard(mov);
-  });
-  const movieContainer = document.querySelector(".movie-container");
-  movieContainer.innerHTML = cards;
 }
 
 function showCard(mov) {
@@ -106,5 +120,14 @@ function showModal(m) {
           </ul>
       </div>
   </div>
+</div>`;
+}
+
+function showAlert(err) {
+  return `<div class="alert alert-danger alert-dismissible fade show" role="alert">
+  ${err}
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
 </div>`;
 }
